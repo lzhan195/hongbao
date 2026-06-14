@@ -30,3 +30,12 @@ Display layer
 - ENS is the identity layer for creators and claimers.
 - World ID is the anti-sybil gate for claims.
 - Arc is the settlement rail for the funded packet and claim receipts.
+
+## Demo sequence
+
+1. Create a packet from the dashboard.
+2. Watch the packet appear in the active list.
+3. Mark the packet as funded.
+4. Open the claim page.
+5. Verify World ID and submit the claim.
+6. Observe the receipt and remaining claim count update.
