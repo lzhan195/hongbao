@@ -1,32 +1,79 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
-import { getPacket } from "@/lib/hongbao-store";
+import { useMemo, useState } from "react";
+
+const packetById = {
+  hb_7f3a: {
+    creatorEns: "sakura.eth",
+    chain: "Arc testnet",
+    remainingClaims: 3,
+    perClaimAmount: 5,
+    funded: true,
+  },
+  hb_91cd: {
+    creatorEns: "mizu.eth",
+    chain: "Arc testnet",
+    remainingClaims: 8,
+    perClaimAmount: 5,
+    funded: true,
+  },
+} as const;
 
 type Props = {
   params: Promise<{ packetId: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { packetId } = await params;
+export default function ClaimPage({ params }: Props) {
+  const [packetId, setPacketId] = useState<string | null>(null);
+  const [claimerEns, setClaimerEns] = useState("lina.eth");
+  const [worldIdNullifier, setWorldIdNullifier] = useState("demo-nullifier");
+  const [status, setStatus] = useState<string>("Awaiting proof");
+  const [result, setResult] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  return {
-    title: `Hongbao ${packetId}`,
-    description: `Claim packet ${packetId} with verified human proof on Hongbao.`,
-    openGraph: {
-      title: `Hongbao ${packetId}`,
-      description: "Happy hackathon, humans only.",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `Hongbao ${packetId}`,
-      description: "Happy hackathon, humans only.",
-    },
-  };
-}
+  useMemo(() => {
+    params.then(({ packetId: nextPacketId }) => setPacketId(nextPacketId));
+  }, [params]);
 
-export default async function ClaimPage({ params }: Props) {
-  const { packetId } = await params;
-  const packet = getPacket(packetId);
+  const packet = packetId ? packetById[packetId as keyof typeof packetById] : undefined;
+
+  async function handleClaim() {
+    if (!packetId) return;
+    setIsSubmitting(true);
+    setStatus("Verifying World ID...");
+    setResult(null);
+
+    const verifyResponse = await fetch("/api/verify-world-id", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "claim", worldIdNullifier }),
+    });
+
+    if (!verifyResponse.ok) {
+      setStatus("World ID verification failed");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setStatus("Settling claim on Arc...");
+    const claimResponse = await fetch("/api/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ packetId, claimerEns, worldIdNullifier }),
+    });
+
+    const claimData = await claimResponse.json();
+    if (!claimResponse.ok) {
+      setStatus(claimData.error ?? "Claim failed");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setStatus("Claim complete");
+    setResult(`Tx ${claimData.txHash.slice(0, 12)}… · ENS record ${claimData.ensRecordTxHash.slice(0, 12)}… · ${claimData.remainingClaims} claims left`);
+    setIsSubmitting(false);
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-8 sm:px-10 lg:px-12">
@@ -51,7 +98,7 @@ export default async function ClaimPage({ params }: Props) {
           </div>
           <div className="mt-6 text-center">
             <p className="text-sm uppercase tracking-[0.35em] text-stone-500">Packet</p>
-            <p className="mt-2 font-mono text-sm font-semibold text-stone-800">{packetId}</p>
+            <p className="mt-2 font-mono text-sm font-semibold text-stone-800">{packetId ?? "loading..."}</p>
           </div>
         </div>
 
@@ -68,14 +115,22 @@ export default async function ClaimPage({ params }: Props) {
 
           <div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl bg-stone-50 p-4">
-                <dt className="text-sm text-stone-500">Claimer ENS</dt>
-                <dd className="mt-1 text-lg font-semibold text-stone-950">lina.eth</dd>
-              </div>
-              <div className="rounded-2xl bg-stone-50 p-4">
-                <dt className="text-sm text-stone-500">Packet status</dt>
-                <dd className="mt-1 text-lg font-semibold text-stone-950">{packet?.funded ? "Ready to claim" : "Awaiting funding"}</dd>
-              </div>
+              <label className="rounded-2xl bg-stone-50 p-4">
+                <span className="text-sm text-stone-500">Claimer ENS</span>
+                <input
+                  value={claimerEns}
+                  onChange={(event) => setClaimerEns(event.target.value)}
+                  className="mt-1 w-full bg-transparent text-lg font-semibold text-stone-950 outline-none"
+                />
+              </label>
+              <label className="rounded-2xl bg-stone-50 p-4">
+                <span className="text-sm text-stone-500">World ID nullifier</span>
+                <input
+                  value={worldIdNullifier}
+                  onChange={(event) => setWorldIdNullifier(event.target.value)}
+                  className="mt-1 w-full bg-transparent text-lg font-semibold text-stone-950 outline-none"
+                />
+              </label>
             </div>
             <dl className="mt-5 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-stone-50 p-4">
@@ -92,17 +147,23 @@ export default async function ClaimPage({ params }: Props) {
               </div>
             </dl>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button className="rounded-full bg-gradient-to-r from-red-600 to-amber-500 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-red-200 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60">
-                Claim with World ID
+              <button
+                onClick={handleClaim}
+                disabled={isSubmitting}
+                className="rounded-full bg-gradient-to-r from-red-600 to-amber-500 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-red-200 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Claiming..." : "Claim with World ID"}
               </button>
               <button className="rounded-full border border-stone-300 bg-white px-6 py-4 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">
                 Verify ENS ownership
               </button>
             </div>
+            <div className="mt-4 rounded-2xl bg-stone-50 p-4 text-sm text-stone-600">Status: {status}</div>
+            {result ? <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">{result}</div> : null}
           </div>
 
           <div className="rounded-[1.75rem] border border-dashed border-amber-200 bg-amber-50/70 p-6 text-sm leading-7 text-stone-700">
-            A receipt will be written to <span className="font-mono">hongbao.claim.{packetId}</span> after the claim settles, and the claimer’s ENS text record can be updated with proof-of-claim metadata.
+            A receipt will be written to <span className="font-mono">hongbao.claim.{packetId ?? "..."}</span> after the claim settles, and the claimer’s ENS text record can be updated with proof-of-claim metadata.
           </div>
         </div>
       </section>
