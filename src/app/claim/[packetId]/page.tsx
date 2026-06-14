@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const packetById = {
   hb_7f3a: {
@@ -32,7 +32,7 @@ export default function ClaimPage({ params }: Props) {
   const [result, setResult] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useMemo(() => {
+  useEffect(() => {
     params.then(({ packetId: nextPacketId }) => setPacketId(nextPacketId));
   }, [params]);
 
