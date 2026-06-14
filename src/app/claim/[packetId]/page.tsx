@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getPacket } from "@/lib/hongbao-store";
 
 type Props = {
   params: Promise<{ packetId: string }>;
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ClaimPage({ params }: Props) {
   const { packetId } = await params;
+  const packet = getPacket(packetId);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-8 sm:px-10 lg:px-12">
@@ -57,7 +59,7 @@ export default async function ClaimPage({ params }: Props) {
           <div className="space-y-3">
             <p className="text-sm uppercase tracking-[0.28em] text-red-700">Verified human claim</p>
             <h1 className="font-serif text-5xl leading-tight text-stone-950 sm:text-6xl">
-              sakura.eth sent a Hongbao!
+              {packet?.creatorEns ?? "sakura.eth"} sent a Hongbao!
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-stone-600">
               Happy hackathon, humans only. Claiming proves uniqueness with World ID, resolves identities with ENS, and settles on Arc.
@@ -72,21 +74,21 @@ export default async function ClaimPage({ params }: Props) {
               </div>
               <div className="rounded-2xl bg-stone-50 p-4">
                 <dt className="text-sm text-stone-500">Packet status</dt>
-                <dd className="mt-1 text-lg font-semibold text-stone-950">Awaiting proof</dd>
+                <dd className="mt-1 text-lg font-semibold text-stone-950">{packet?.funded ? "Ready to claim" : "Awaiting funding"}</dd>
               </div>
             </div>
             <dl className="mt-5 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-stone-50 p-4">
                 <dt className="text-sm text-stone-500">Remaining claims</dt>
-                <dd className="mt-1 text-2xl font-semibold text-stone-950">3</dd>
+                <dd className="mt-1 text-2xl font-semibold text-stone-950">{packet?.remainingClaims ?? 3}</dd>
               </div>
               <div className="rounded-2xl bg-stone-50 p-4">
                 <dt className="text-sm text-stone-500">Per claim</dt>
-                <dd className="mt-1 text-2xl font-semibold text-stone-950">5 USDC</dd>
+                <dd className="mt-1 text-2xl font-semibold text-stone-950">{packet?.perClaimAmount ?? 5} USDC</dd>
               </div>
               <div className="rounded-2xl bg-stone-50 p-4">
                 <dt className="text-sm text-stone-500">Network</dt>
-                <dd className="mt-1 text-2xl font-semibold text-stone-950">Arc</dd>
+                <dd className="mt-1 text-2xl font-semibold text-stone-950">{packet?.chain ?? "Arc"}</dd>
               </div>
             </dl>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">

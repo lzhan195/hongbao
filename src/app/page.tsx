@@ -1,29 +1,5 @@
 import Link from "next/link";
-
-const packets = [
-  {
-    id: "hb_7f3a",
-    creatorEns: "sakura.eth",
-    creatorAddress: "0x8b4c…c9a1",
-    remainingClaims: 3,
-    totalValue: 15,
-    perClaimAmount: 5,
-    chain: "Arc testnet",
-    worldGate: "Verified humans only",
-    message: "Happy hackathon, humans only.",
-  },
-  {
-    id: "hb_91cd",
-    creatorEns: "mizu.eth",
-    creatorAddress: "0x9f2e…1d02",
-    remainingClaims: 8,
-    totalValue: 40,
-    perClaimAmount: 5,
-    chain: "Arc testnet",
-    worldGate: "World ID required",
-    message: "A little red envelope for the group chat.",
-  },
-];
+import { getDemoPackets } from "@/lib/hongbao-data";
 
 const highlights = [
   "ENS names every creator and claimer",
@@ -32,6 +8,7 @@ const highlights = [
 ];
 
 export default function Home() {
+  const packets = getDemoPackets();
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-6 py-8 sm:px-10 lg:px-12">
       <section className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
