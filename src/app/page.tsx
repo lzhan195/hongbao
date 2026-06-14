@@ -4,25 +4,37 @@ const packets = [
   {
     id: "hb_7f3a",
     creatorEns: "sakura.eth",
+    creatorAddress: "0x8b4c…c9a1",
     remainingClaims: 3,
     totalValue: 15,
     perClaimAmount: 5,
+    chain: "Arc testnet",
+    worldGate: "Verified humans only",
     message: "Happy hackathon, humans only.",
   },
   {
     id: "hb_91cd",
     creatorEns: "mizu.eth",
+    creatorAddress: "0x9f2e…1d02",
     remainingClaims: 8,
     totalValue: 40,
     perClaimAmount: 5,
+    chain: "Arc testnet",
+    worldGate: "World ID required",
     message: "A little red envelope for the group chat.",
   },
+];
+
+const highlights = [
+  "ENS names every creator and claimer",
+  "World ID blocks bots and duplicate claims",
+  "Arc + Gateway keeps settlement stablecoin-native",
 ];
 
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-6 py-8 sm:px-10 lg:px-12">
-      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+      <section className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
         <div className="space-y-5">
           <span className="inline-flex w-fit rounded-full border border-red-200 bg-white/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.28em] text-red-700 shadow-sm">
             Cross-chain lucky money
@@ -33,7 +45,7 @@ export default function Home() {
             </h1>
             <p className="max-w-2xl text-base leading-7 text-stone-600 sm:text-lg">
               A premium, bot-proof red packet flow with ENS identity, World ID
-              verification, and chain abstracted USDC claims across testnets.
+              verification, and chain-abstracted USDC claims across testnets.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -47,19 +59,33 @@ export default function Home() {
               View active packets
             </Link>
           </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {highlights.map((item) => (
+              <div
+                key={item}
+                className="rounded-2xl border border-stone-200 bg-white/75 px-4 py-4 text-sm font-medium text-stone-700 shadow-sm"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
         </div>
 
         <aside className="rounded-[2rem] border border-amber-100 bg-white/80 p-6 shadow-[0_20px_80px_rgba(120,53,15,0.08)] backdrop-blur">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-stone-500">Ready to create</p>
               <p className="text-xl font-semibold text-stone-950">New Hongbao</p>
             </div>
             <div className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-              Sepolia → Amoy
+              Sepolia → Arc
             </div>
           </div>
           <form className="space-y-4">
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-stone-700">Your ENS name</span>
+              <input className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 outline-none transition focus:border-red-400" placeholder="sakura.eth" />
+            </label>
             <label className="block space-y-2">
               <span className="text-sm font-medium text-stone-700">Total USDC</span>
               <input className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 outline-none transition focus:border-red-400" defaultValue="10" />
@@ -67,6 +93,10 @@ export default function Home() {
             <label className="block space-y-2">
               <span className="text-sm font-medium text-stone-700">Number of claims</span>
               <input className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 outline-none transition focus:border-red-400" defaultValue="5" />
+            </label>
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-stone-700">World ID gate</span>
+              <input className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 outline-none transition focus:border-red-400" defaultValue="verified humans only" />
             </label>
             <label className="block space-y-2">
               <span className="text-sm font-medium text-stone-700">Message</span>
@@ -95,12 +125,17 @@ export default function Home() {
                 <div>
                   <p className="text-sm text-stone-500">Creator</p>
                   <h3 className="text-lg font-semibold text-stone-950">{packet.creatorEns}</h3>
+                  <p className="mt-1 text-xs text-stone-500">{packet.creatorAddress}</p>
                 </div>
                 <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
                   {packet.remainingClaims} left
                 </span>
               </div>
               <p className="mt-4 text-sm leading-6 text-stone-600">{packet.message}</p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-stone-600">
+                <span className="rounded-full bg-stone-100 px-3 py-1">{packet.chain}</span>
+                <span className="rounded-full bg-stone-100 px-3 py-1">{packet.worldGate}</span>
+              </div>
               <dl className="mt-5 grid grid-cols-3 gap-3 text-sm">
                 <div className="rounded-2xl bg-stone-50 p-3">
                   <dt className="text-stone-500">Total</dt>

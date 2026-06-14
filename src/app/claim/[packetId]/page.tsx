@@ -9,18 +9,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { packetId } = await params;
 
   return {
-    title: "sakura.eth sent a Hongbao!",
+    title: `Hongbao ${packetId}`,
     description: `Claim packet ${packetId} with verified human proof on Hongbao.`,
     openGraph: {
-      title: "sakura.eth sent a Hongbao!",
+      title: `Hongbao ${packetId}`,
       description: "Happy hackathon, humans only.",
-      images: ["/og-image.png"],
     },
     twitter: {
       card: "summary_large_image",
-      title: "sakura.eth sent a Hongbao!",
+      title: `Hongbao ${packetId}`,
       description: "Happy hackathon, humans only.",
-      images: ["/og-image.png"],
     },
   };
 }
@@ -62,16 +60,20 @@ export default async function ClaimPage({ params }: Props) {
               sakura.eth sent a Hongbao!
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-stone-600">
-              Happy hackathon, humans only.
+              Happy hackathon, humans only. Claiming proves uniqueness with World ID, resolves identities with ENS, and settles on Arc.
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-stone-500">Claimer ENS</span>
-              <span className="border-b-2 border-amber-400 pb-0.5 text-lg font-semibold text-stone-950">
-                lina.eth
-              </span>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl bg-stone-50 p-4">
+                <dt className="text-sm text-stone-500">Claimer ENS</dt>
+                <dd className="mt-1 text-lg font-semibold text-stone-950">lina.eth</dd>
+              </div>
+              <div className="rounded-2xl bg-stone-50 p-4">
+                <dt className="text-sm text-stone-500">Packet status</dt>
+                <dd className="mt-1 text-lg font-semibold text-stone-950">Awaiting proof</dd>
+              </div>
             </div>
             <dl className="mt-5 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-stone-50 p-4">
@@ -84,16 +86,21 @@ export default async function ClaimPage({ params }: Props) {
               </div>
               <div className="rounded-2xl bg-stone-50 p-4">
                 <dt className="text-sm text-stone-500">Network</dt>
-                <dd className="mt-1 text-2xl font-semibold text-stone-950">Amoy</dd>
+                <dd className="mt-1 text-2xl font-semibold text-stone-950">Arc</dd>
               </div>
             </dl>
-            <button className="mt-6 w-full rounded-full bg-gradient-to-r from-red-600 to-amber-500 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-red-200 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60">
-              Claim with World ID
-            </button>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button className="rounded-full bg-gradient-to-r from-red-600 to-amber-500 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-red-200 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60">
+                Claim with World ID
+              </button>
+              <button className="rounded-full border border-stone-300 bg-white px-6 py-4 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">
+                Verify ENS ownership
+              </button>
+            </div>
           </div>
 
           <div className="rounded-[1.75rem] border border-dashed border-amber-200 bg-amber-50/70 p-6 text-sm leading-7 text-stone-700">
-            A receipt will be written to <span className="font-mono">hongbao.claim.{packetId}</span> after the claim settles.
+            A receipt will be written to <span className="font-mono">hongbao.claim.{packetId}</span> after the claim settles, and the claimer’s ENS text record can be updated with proof-of-claim metadata.
           </div>
         </div>
       </section>

@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     packetId,
-    funded: false,
+    funded: Boolean(packetId),
+    settlementRail: "Circle Gateway on Arc",
   });
 }
