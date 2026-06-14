@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createPacket } from "@/lib/hongbao-store";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
@@ -7,14 +8,7 @@ export async function POST(request: NextRequest) {
   const claimCount = typeof body.claimCount === "number" ? body.claimCount : 5;
   const chain = typeof body.chain === "string" ? body.chain : "Arc testnet";
 
-  return NextResponse.json({
-    packetId: `hb_${Math.random().toString(36).slice(2, 6)}`,
-    creatorEns,
-    chain,
-    depositAddress: "0x000000000000000000000000000000000000aRc",
-    totalValue,
-    claimCount,
-    perClaimAmount: Number((totalValue / claimCount).toFixed(2)),
-    worldGate: "World ID required",
-  });
+  const packet = createPacket({ creatorEns, totalValue, claimCount, chain });
+
+  return NextResponse.json(packet);
 }
