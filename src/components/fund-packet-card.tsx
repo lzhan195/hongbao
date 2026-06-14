@@ -6,7 +6,7 @@ type Props = {
   packetId: string;
   depositAddress: string;
   funded: boolean;
-  onFunded: () => void;
+  onFunded: (packetId: string) => void;
 };
 
 export function FundPacketCard({ packetId, depositAddress, funded, onFunded }: Props) {
@@ -18,50 +18,34 @@ export function FundPacketCard({ packetId, depositAddress, funded, onFunded }: P
     setStatus(null);
 
     try {
-      const response = await fetch("/api/fund-packet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packetId }),
-      });
-      const data = (await response.json()) as { success: boolean; error?: string };
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error ?? "Unable to fund packet");
+      const response = await fetch(`/api/check-deposit?packetId=${packetId}`);
+      const result = (await response.json()) as { funded: boolean };
+      if (result.funded) {
+        onFunded(packetId);
+        setStatus("Packet marked as funded on Arc.");
+      } else {
+        setStatus("Deposit not detected yet. Try again after sending funds.");
       }
-
-      onFunded();
-      setStatus("Packet funded on Arc and ready to claim.");
     } catch {
-      setStatus("Could not mark the packet funded.");
+      setStatus("Could not verify the deposit right now.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-stone-500">Funding</p>
-          <h3 className="text-lg font-semibold text-stone-950">Arc deposit address</h3>
-        </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${funded ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-          {funded ? "Funded" : "Waiting for deposit"}
-        </span>
-      </div>
-      <p className="mt-4 break-all rounded-2xl bg-stone-50 px-4 py-3 font-mono text-sm text-stone-700">{depositAddress}</p>
-      <div className="mt-5 flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={handleFund}
-          disabled={loading || funded}
-          className="rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? "Marking funded..." : funded ? "Already funded" : "Mark as funded"}
-        </button>
-        <span className="self-center text-sm text-stone-500">Packet {packetId}</span>
-      </div>
-      {status ? <p className="mt-4 text-sm text-stone-600">{status}</p> : null}
+    <div className="rounded-[1.75rem] border border-stone-200 bg-white p-5 shadow-sm">
+      <p className="text-sm text-stone-500">Settlement status</p>
+      <p className="mt-1 text-lg font-semibold text-stone-950">{funded ? "Funded" : "Waiting for Arc deposit"}</p>
+      <p className="mt-2 break-all font-mono text-xs text-stone-500">{depositAddress}</p>
+      <button
+        onClick={handleFund}
+        disabled={loading || funded}
+        className="mt-4 w-full rounded-full border border-stone-300 bg-white px-4 py-3 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {loading ? "Checking deposit..." : funded ? "Already funded" : "Check funding on Arc"}
+      </button>
+      {status ? <p className="mt-3 text-sm text-stone-600">{status}</p> : null}
     </div>
   );
 }
