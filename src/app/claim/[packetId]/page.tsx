@@ -18,6 +18,7 @@ type Props = {
 
 export default function ClaimPage({ params }: Props) {
   const [packetId, setPacketId] = useState<string | null>(null);
+  const [packet, setPacket] = useState<Packet | null>(null);
   const [claimerEns, setClaimerEns] = useState("lina.eth");
   const [worldIdNullifier, setWorldIdNullifier] = useState("demo-nullifier");
   const [status, setStatus] = useState<string>("Awaiting proof");
@@ -28,16 +29,13 @@ export default function ClaimPage({ params }: Props) {
     params.then(({ packetId: nextPacketId }) => setPacketId(nextPacketId));
   }, [params]);
 
-  const packet: Packet | undefined = packetId
-    ? {
-        packetId,
-        creatorEns: packetId === "hb_91cd" ? "mizu.eth" : "sakura.eth",
-        chain: "Arc testnet",
-        remainingClaims: packetId === "hb_91cd" ? 8 : 3,
-        perClaimAmount: 5,
-        funded: true,
-      }
-    : undefined;
+  useEffect(() => {
+    if (!packetId) return;
+    fetch(`/api/packets/${packetId}`)
+      .then((response) => response.json())
+      .then((data: Packet) => setPacket(data))
+      .catch(() => setPacket(null));
+  }, [packetId]);
 
   async function handleClaim() {
     if (!packetId) return;
@@ -73,6 +71,14 @@ export default function ClaimPage({ params }: Props) {
 
     setStatus("Claim complete");
     setResult(`Tx ${claimData.txHash.slice(0, 12)}… · ENS record ${claimData.ensRecordTxHash.slice(0, 12)}… · ${claimData.remainingClaims} claims left`);
+    setPacket((current) =>
+      current
+        ? {
+            ...current,
+            remainingClaims: claimData.remainingClaims,
+          }
+        : current,
+    );
     setIsSubmitting(false);
   }
 
