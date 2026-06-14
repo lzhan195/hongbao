@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CreateHongbaoForm } from "@/components/create-hongbao-form";
 import { FundPacketCard } from "@/components/fund-packet-card";
 import { PacketGrid } from "@/components/packet-grid";
@@ -31,6 +31,13 @@ const highlights = [
 
 export function HomeClient({ initialPackets }: Props) {
   const [packets, setPackets] = useState(initialPackets);
+
+  useEffect(() => {
+    fetch("/api/packets")
+      .then((response) => response.json())
+      .then((data: Packet[]) => setPackets(data))
+      .catch(() => undefined);
+  }, []);
 
   const viewPackets = useMemo(
     () =>
@@ -74,7 +81,7 @@ export function HomeClient({ initialPackets }: Props) {
 
         <CreateHongbaoForm
           onCreated={(packet) => {
-            setPackets((current) => [{ ...packet, creatorAddress: packet.depositAddress, message: "A little red envelope for the group chat." }, ...current]);
+            setPackets((current) => [{ ...packet, funded: false, creatorAddress: packet.depositAddress, message: "A little red envelope for the group chat." }, ...current]);
           }}
         />
       </section>
