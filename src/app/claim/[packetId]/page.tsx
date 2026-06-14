@@ -3,22 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const packetById = {
-  hb_7f3a: {
-    creatorEns: "sakura.eth",
-    chain: "Arc testnet",
-    remainingClaims: 3,
-    perClaimAmount: 5,
-    funded: true,
-  },
-  hb_91cd: {
-    creatorEns: "mizu.eth",
-    chain: "Arc testnet",
-    remainingClaims: 8,
-    perClaimAmount: 5,
-    funded: true,
-  },
-} as const;
+type Packet = {
+  packetId: string;
+  creatorEns: string;
+  chain: string;
+  remainingClaims: number;
+  perClaimAmount: number;
+  funded: boolean;
+};
 
 type Props = {
   params: Promise<{ packetId: string }>;
@@ -36,7 +28,16 @@ export default function ClaimPage({ params }: Props) {
     params.then(({ packetId: nextPacketId }) => setPacketId(nextPacketId));
   }, [params]);
 
-  const packet = packetId ? packetById[packetId as keyof typeof packetById] : undefined;
+  const packet: Packet | undefined = packetId
+    ? {
+        packetId,
+        creatorEns: packetId === "hb_91cd" ? "mizu.eth" : "sakura.eth",
+        chain: "Arc testnet",
+        remainingClaims: packetId === "hb_91cd" ? 8 : 3,
+        perClaimAmount: 5,
+        funded: true,
+      }
+    : undefined;
 
   async function handleClaim() {
     if (!packetId) return;
@@ -164,6 +165,15 @@ export default function ClaimPage({ params }: Props) {
 
           <div className="rounded-[1.75rem] border border-dashed border-amber-200 bg-amber-50/70 p-6 text-sm leading-7 text-stone-700">
             A receipt will be written to <span className="font-mono">hongbao.claim.{packetId ?? "..."}</span> after the claim settles, and the claimer’s ENS text record can be updated with proof-of-claim metadata.
+          </div>
+
+          <div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
+            <p className="text-sm font-medium text-stone-500">What still happens in this demo step</p>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-stone-600">
+              <li>• ENS resolves creator identity on the claim page</li>
+              <li>• World ID nullifier is checked before settlement</li>
+              <li>• Arc settlement writes the claim receipt and remaining balance</li>
+            </ul>
           </div>
         </div>
       </section>
