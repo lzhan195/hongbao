@@ -1,188 +1,21 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-
-type Packet = {
-  packetId: string;
-  creatorEns: string;
-  chain: string;
-  remainingClaims: number;
-  perClaimAmount: number;
-  funded: boolean;
-};
+import { ClaimClient } from "@/components/claim-client";
 
 type Props = {
   params: Promise<{ packetId: string }>;
 };
 
-export default function ClaimPage({ params }: Props) {
-  const [packetId, setPacketId] = useState<string | null>(null);
-  const [packet, setPacket] = useState<Packet | null>(null);
-  const [claimerEns, setClaimerEns] = useState("lina.eth");
-  const [worldIdNullifier, setWorldIdNullifier] = useState("demo-nullifier");
-  const [status, setStatus] = useState<string>("Awaiting proof");
-  const [result, setResult] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { packetId } = await params;
+  return {
+    title: `Hongbao ${packetId}`,
+    description: `Claim packet ${packetId} with verified human proof on Hongbao.`,
+  };
+}
 
-  useEffect(() => {
-    params.then(({ packetId: nextPacketId }) => setPacketId(nextPacketId));
-  }, [params]);
+export default async function ClaimPage({ params }: Props) {
+  const { packetId } = await params;
 
-  useEffect(() => {
-    if (!packetId) return;
-    fetch(`/api/packets/${packetId}`)
-      .then((response) => response.json())
-      .then((data: Packet) => setPacket(data))
-      .catch(() => setPacket(null));
-  }, [packetId]);
-
-  async function handleClaim() {
-    if (!packetId) return;
-    setIsSubmitting(true);
-    setStatus("Verifying World ID...");
-    setResult(null);
-
-    const verifyResponse = await fetch("/api/verify-world-id", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "claim", worldIdNullifier }),
-    });
-
-    if (!verifyResponse.ok) {
-      setStatus("World ID verification failed");
-      setIsSubmitting(false);
-      return;
-    }
-
-    setStatus("Settling claim on Arc...");
-    const claimResponse = await fetch("/api/claim", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packetId, claimerEns, worldIdNullifier }),
-    });
-
-    const claimData = await claimResponse.json();
-    if (!claimResponse.ok) {
-      setStatus(claimData.error ?? "Claim failed");
-      setIsSubmitting(false);
-      return;
-    }
-
-    setStatus("Claim complete");
-    setResult(`Tx ${claimData.txHash.slice(0, 12)}… · ENS record ${claimData.ensRecordTxHash.slice(0, 12)}… · ${claimData.remainingClaims} claims left`);
-    setPacket((current) =>
-      current
-        ? {
-            ...current,
-            remainingClaims: claimData.remainingClaims,
-          }
-        : current,
-    );
-    setIsSubmitting(false);
-  }
-
-  return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-8 sm:px-10 lg:px-12">
-      <div className="mb-8 flex items-center justify-between">
-        <Link href="/" className="font-serif text-2xl font-semibold text-stone-950">
-          🧧 Hongbao
-        </Link>
-        <span className="rounded-full border border-amber-200 bg-white px-3 py-1 text-xs font-medium text-amber-800 shadow-sm">
-          Claim page preview
-        </span>
-      </div>
-
-      <section className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-        <div className="rounded-[2rem] border border-red-100 bg-white p-8 shadow-[0_24px_90px_rgba(220,38,38,0.08)]">
-          <div className="mx-auto flex aspect-[4/5] max-w-sm items-center justify-center rounded-[2rem] bg-gradient-to-b from-red-700 via-red-600 to-rose-500 p-6 shadow-inner">
-            <div className="relative h-full w-full rounded-[1.5rem] border border-white/20 bg-gradient-to-b from-red-600 to-red-700">
-              <div className="absolute inset-x-0 top-0 h-1/2 rounded-t-[1.5rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.22),_transparent_60%)]" />
-              <div className="absolute inset-x-0 top-[42%] mx-auto h-28 w-28 rotate-45 rounded-2xl border-b border-l border-amber-200/80 bg-gradient-to-br from-amber-300 via-yellow-200 to-amber-500 shadow-lg" />
-              <div className="absolute inset-x-0 top-[58%] mx-auto h-24 w-44 rounded-b-[2rem] border border-amber-100/70 bg-red-800/70" />
-              <div className="absolute inset-x-8 top-8 h-16 rounded-full border border-white/20 bg-white/10 blur-xl" />
-            </div>
-          </div>
-          <div className="mt-6 text-center">
-            <p className="text-sm uppercase tracking-[0.35em] text-stone-500">Packet</p>
-            <p className="mt-2 font-mono text-sm font-semibold text-stone-800">{packetId ?? "loading..."}</p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <p className="text-sm uppercase tracking-[0.28em] text-red-700">Verified human claim</p>
-            <h1 className="font-serif text-5xl leading-tight text-stone-950 sm:text-6xl">
-              {packet?.creatorEns ?? "sakura.eth"} sent a Hongbao!
-            </h1>
-            <p className="max-w-2xl text-lg leading-8 text-stone-600">
-              Happy hackathon, humans only. Claiming proves uniqueness with World ID, resolves identities with ENS, and settles on Arc.
-            </p>
-          </div>
-
-          <div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="rounded-2xl bg-stone-50 p-4">
-                <span className="text-sm text-stone-500">Claimer ENS</span>
-                <input
-                  value={claimerEns}
-                  onChange={(event) => setClaimerEns(event.target.value)}
-                  className="mt-1 w-full bg-transparent text-lg font-semibold text-stone-950 outline-none"
-                />
-              </label>
-              <label className="rounded-2xl bg-stone-50 p-4">
-                <span className="text-sm text-stone-500">World ID nullifier</span>
-                <input
-                  value={worldIdNullifier}
-                  onChange={(event) => setWorldIdNullifier(event.target.value)}
-                  className="mt-1 w-full bg-transparent text-lg font-semibold text-stone-950 outline-none"
-                />
-              </label>
-            </div>
-            <dl className="mt-5 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl bg-stone-50 p-4">
-                <dt className="text-sm text-stone-500">Remaining claims</dt>
-                <dd className="mt-1 text-2xl font-semibold text-stone-950">{packet?.remainingClaims ?? 3}</dd>
-              </div>
-              <div className="rounded-2xl bg-stone-50 p-4">
-                <dt className="text-sm text-stone-500">Per claim</dt>
-                <dd className="mt-1 text-2xl font-semibold text-stone-950">{packet?.perClaimAmount ?? 5} USDC</dd>
-              </div>
-              <div className="rounded-2xl bg-stone-50 p-4">
-                <dt className="text-sm text-stone-500">Network</dt>
-                <dd className="mt-1 text-2xl font-semibold text-stone-950">{packet?.chain ?? "Arc"}</dd>
-              </div>
-            </dl>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                onClick={handleClaim}
-                disabled={isSubmitting}
-                className="rounded-full bg-gradient-to-r from-red-600 to-amber-500 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-red-200 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmitting ? "Claiming..." : "Claim with World ID"}
-              </button>
-              <button className="rounded-full border border-stone-300 bg-white px-6 py-4 text-sm font-semibold text-stone-700 transition hover:border-stone-400 hover:bg-stone-50">
-                Verify ENS ownership
-              </button>
-            </div>
-            <div className="mt-4 rounded-2xl bg-stone-50 p-4 text-sm text-stone-600">Status: {status}</div>
-            {result ? <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">{result}</div> : null}
-          </div>
-
-          <div className="rounded-[1.75rem] border border-dashed border-amber-200 bg-amber-50/70 p-6 text-sm leading-7 text-stone-700">
-            A receipt will be written to <span className="font-mono">hongbao.claim.{packetId ?? "..."}</span> after the claim settles, and the claimer’s ENS text record can be updated with proof-of-claim metadata.
-          </div>
-
-          <div className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-stone-500">What still happens in this demo step</p>
-            <ul className="mt-3 space-y-2 text-sm leading-6 text-stone-600">
-              <li>• ENS resolves creator identity on the claim page</li>
-              <li>• World ID nullifier is checked before settlement</li>
-              <li>• Arc settlement writes the claim receipt and remaining balance</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+  return <ClaimClient packetId={packetId} />;
 }

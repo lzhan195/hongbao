@@ -12,6 +12,8 @@ type Packet = {
   chain: string;
   worldGate: string;
   message?: string;
+  funded?: boolean;
+  claims?: Array<{ claimerEns: string; claimedAt: string }>;
 };
 
 type Props = {
@@ -37,6 +39,7 @@ export function PacketGrid({ packets }: Props) {
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-stone-600">
             <span className="rounded-full bg-stone-100 px-3 py-1">{packet.chain}</span>
             <span className="rounded-full bg-stone-100 px-3 py-1">{packet.worldGate}</span>
+            {packet.funded ? <span className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">Funded</span> : <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-700">Awaiting funding</span>}
           </div>
           <dl className="mt-5 grid grid-cols-3 gap-3 text-sm">
             <div className="rounded-2xl bg-stone-50 p-3">

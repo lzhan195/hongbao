@@ -81,6 +81,10 @@ export function getPacket(packetId: string) {
   return packetStore.get(packetId);
 }
 
+export function getAllPackets() {
+  return Array.from(packetStore.values());
+}
+
 export function markPacketFunded(packetId: string) {
   const packet = packetStore.get(packetId);
   if (!packet) return undefined;

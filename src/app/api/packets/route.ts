@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getDemoPackets } from "@/lib/hongbao-data";
+import { getAllPackets } from "@/lib/hongbao-store";
 
 export async function GET() {
-  const packets = getDemoPackets();
-  return NextResponse.json(packets);
+  return NextResponse.json(getAllPackets());
 }

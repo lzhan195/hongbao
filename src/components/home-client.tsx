@@ -51,6 +51,8 @@ export function HomeClient({ initialPackets }: Props) {
         chain: packet.chain,
         worldGate: packet.worldGate,
         message: packet.message,
+        funded: packet.funded,
+        claims: [],
       })),
     [packets],
   );
